@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  @page { size: A4; margin: 2cm; @bottom-right { content: "Page " counter(page) " of " counter(pages); font-size: 9pt; color: #666; } }
+  body { font-family: "DejaVu Sans", sans-serif; font-size: 10.5pt; color: #1d1d1f; line-height: 1.45; }
+  h1 { font-size: 20pt; margin: 0 0 4pt; }
+  h2 { font-size: 13pt; border-bottom: 1px solid #ccc; padding-bottom: 3pt; margin-top: 18pt; }
+  h3 { font-size: 11pt; margin-bottom: 2pt; }
+  .muted { color: #666; }
+  table { width: 100%; border-collapse: collapse; margin-top: 6pt; }
+  th, td { text-align: left; padding: 4pt 6pt; border-bottom: 1px solid #e5e5e5; }
+  td.num, th.num { text-align: right; }
+  .draft { color: #b00; font-weight: bold; }
+  .clause { white-space: pre-wrap; margin-bottom: 8pt; }
+  .pagebreak { page-break-before: always; }
+</style>
+</head>
+<body>
+  <p class="draft">DRAFT — pending review by {{ company }}</p>
+  <h1>Project proposal</h1>
+  <p class="muted">For {{ lead.name }} · {{ today.strftime("%B %d, %Y") }} · Requirements v{{ version.version }} (sha256 {{ version.sha256[:12] }})</p>
+
+  <h2>Summary</h2>
+  <p>{{ doc.summary }}</p>
+
+  <h2>Scope</h2>
+  {% for epic in doc.epics %}
+    <h3>{{ epic.id }} · {{ epic.title }}</h3>
+    <ul>
+    {% for s in doc.stories if s.epic_id == epic.id %}
+      <li><strong>{{ s.id }}</strong>: as {{ s.as_a }}, I want {{ s.i_want }}{% if s.so_that %} so that {{ s.so_that }}{% endif %}.
+        <ul>{% for ac in s.acceptance_criteria %}<li>{{ ac }}</li>{% endfor %}</ul>
+      </li>
+    {% endfor %}
+    </ul>
+  {% endfor %}
+  {% if doc.nfrs %}
+    <h3>Non-functional requirements</h3>
+    <ul>{% for n in doc.nfrs %}<li>{{ n.category }}: {{ n.text }}</li>{% endfor %}</ul>
+  {% endif %}
+  {% if doc.out_of_scope %}
+    <h3>Out of scope</h3>
+    <ul>{% for o in doc.out_of_scope %}<li>{{ o }}</li>{% endfor %}</ul>
+  {% endif %}
+
+  <h2>Commercial terms</h2>
+  <table>
+    <tr><th>List price</th><td class="num">{{ offer.list_price | money(offer.currency) }}</td></tr>
+    {% if offer.discount_pct > 0 %}
+    <tr><th>Discount</th><td class="num">{{ offer.discount_pct }}%</td></tr>
+    {% endif %}
+    <tr><th>Final price</th><td class="num"><strong>{{ offer.price | money(offer.currency) }}</strong></td></tr>
+    <tr><th>Estimated timeline</th><td class="num">{{ offer.weeks }} weeks</td></tr>
+    <tr><th>Included change rounds</th><td class="num">{{ offer.change_rounds }}</td></tr>
+    <tr><th>Included support</th><td class="num">{{ offer.support_months }} months</td></tr>
+  </table>
+
+  <h3>Payment schedule</h3>
+  <table>
+    <tr><th>Item</th><th class="num">%</th><th class="num">Amount</th></tr>
+    {% for p in offer.payments %}
+    <tr><td>{{ p.name }}</td><td class="num">{{ p.pct }}%</td><td class="num">{{ p.amount | money(offer.currency) }}</td></tr>
+    {% endfor %}
+  </table>
+
+  {% if contract %}
+  <div class="pagebreak"></div>
+  <h1>Draft agreement</h1>
+  <p class="muted">Based on the "{{ contract[0].meta.source }}" template. The commercial terms are those of the proposal above.</p>
+  {% for c in contract %}
+    <div class="clause">{{ c.content }}</div>
+  {% endfor %}
+  {% endif %}
+</body>
+</html>
