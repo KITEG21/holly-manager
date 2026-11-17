@@ -1,0 +1,60 @@
+[project]
+name = "holly-manager"
+version = "0.1.0"
+description = "Agentes de cualificación, requisitos, estimación, comercial y gestión de tareas"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "pydantic>=2.9",
+    "pydantic-settings>=2.5",
+    "email-validator>=2.2",
+    "sqlalchemy[asyncio]>=2.0.35",
+    "asyncpg>=0.30",
+    "alembic>=1.13",
+    "pgvector>=0.3.6",
+    "litellm>=1.60",
+    "celery[redis]>=5.4",
+    "flower>=2.0",
+    "jinja2>=3.1",
+    "sse-starlette>=2.1",
+    "python-multipart>=0.0.12",
+    "opentelemetry-api>=1.27",
+    "opentelemetry-sdk>=1.27",
+    "opentelemetry-exporter-otlp-proto-grpc>=1.27",
+    "opentelemetry-instrumentation-fastapi>=0.48b0",
+    "opentelemetry-instrumentation-sqlalchemy>=0.48b0",
+    "opentelemetry-instrumentation-celery>=0.48b0",
+    "opentelemetry-instrumentation-httpx>=0.48b0",
+]
+
+[project.optional-dependencies]
+# Dependencias pesadas que solo necesita el worker (Docling usa torch; WeasyPrint, pango)
+worker = ["docling>=2.15", "weasyprint>=63", "torch>=2.5", "torchvision>=0.20"]
+
+[dependency-groups]
+dev = ["pytest>=8.3", "pytest-asyncio>=0.24", "ruff>=0.7"]
+
+# Torch solo en CPU: la imagen del worker pasa de ~8 GB a ~2 GB
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu" }]
+torchvision = [{ index = "pytorch-cpu" }]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+# E501: el formatter ya controla la longitud; B008: idiom de FastAPI (File/Depends)
+ignore = ["E501", "B008", "UP046", "UP047"]
