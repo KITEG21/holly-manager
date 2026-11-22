@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 
-from app.api import admin, auth, dev, escalations, leads
+from app.api import admin, auth, dev, docs, escalations, leads, project_docs
 from app.core.config import get_settings
 from app.core.db import engine
 from app.core.telemetry import instrument_engine, setup_telemetry
@@ -20,6 +20,8 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(admin.router)
 app.include_router(dev.router)
+app.include_router(docs.router)
+app.include_router(project_docs.router)
 app.include_router(leads.router)
 app.include_router(escalations.router)
 

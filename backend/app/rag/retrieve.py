@@ -4,13 +4,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.llm import LLMClient
 from app.core.telemetry import set_json_attr, tracer
-from app.models import DocumentChunk, HistoricalTask
+from app.models import Document, DocumentChunk, HistoricalTask
 from app.schemas.estimation import HistoricalMatch
 
 
 class Citation(BaseModel):
     id: int  # número que el agente usa en la respuesta: [C1], [C2]...
     chunk_id: int
+    document_id: int
     source: str
     section: str | None = None
     page: int | None = None
@@ -28,24 +29,30 @@ class Citation(BaseModel):
 
 
 async def search_documents(
-    session: AsyncSession, llm: LLMClient, query: str, kinds: list[str], k: int = 4, start_id: int = 1
+    session: AsyncSession,
+    llm: LLMClient,
+    query: str,
+    kinds: list[str],
+    k: int = 4,
+    start_id: int = 1,
+    lead_id: int | None = None,
 ) -> list[Citation]:
+    """Fragmentos más parecidos. Con `lead_id`, solo de la documentación de ese proyecto."""
     with tracer.start_as_current_span("rag.search_documents") as span:
         span.set_attribute("rag.query", query)
         [qvec] = await llm.embed([query], purpose="query")
         distance = DocumentChunk.embedding.cosine_distance(qvec)
-        rows = (
-            await session.execute(
-                select(DocumentChunk, distance.label("d"))
-                .where(DocumentChunk.kind.in_(kinds))
-                .order_by(distance)
-                .limit(k)
+        stmt = select(DocumentChunk, distance.label("d")).where(DocumentChunk.kind.in_(kinds))
+        if lead_id is not None:
+            stmt = stmt.join(Document, Document.id == DocumentChunk.document_id).where(
+                Document.lead_id == lead_id
             )
-        ).all()
+        rows = (await session.execute(stmt.order_by(distance).limit(k))).all()
         citations = [
             Citation(
                 id=start_id + i,
                 chunk_id=chunk.id,
+                document_id=chunk.document_id,
                 source=chunk.meta.get("source", "document"),
                 section=chunk.meta.get("section"),
                 page=chunk.meta.get("page"),

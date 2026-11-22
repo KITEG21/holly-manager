@@ -17,6 +17,7 @@ x-backend: &backend
     - ./backend/app:/app/app
     - ./backend/alembic:/app/alembic
     - ./backend/seed_docs:/app/seed_docs
+    - ./backend/docs:/app/docs
   depends_on:
     postgres:
       condition: service_healthy

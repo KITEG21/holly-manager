@@ -137,6 +137,7 @@ async def lead_state(lead_id: int, session: AsyncSession = Session) -> LeadState
 async def confirm_requirements(lead_id: int, session: AsyncSession = Session) -> dict[str, int]:
     """El cliente confirma el resumen: se congela como versión inmutable y arranca la estimación."""
     from app.tasks.estimation import estimate_project
+    from app.tasks.ingest import sync_agreement_doc_task
 
     lead = await get_lead(session, lead_id)
     if lead.stage != Stage.requirements:
@@ -171,6 +172,7 @@ async def confirm_requirements(lead_id: int, session: AsyncSession = Session) ->
     )
     await session.commit()
     estimate_project.delay(estimate.id)
+    sync_agreement_doc_task.delay(lead_id)
     return {"version": version.version, "estimate_id": estimate.id}
 
 

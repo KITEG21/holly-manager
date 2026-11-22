@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from pgvector.sqlalchemy import Vector
@@ -17,8 +17,21 @@ class Document(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     filename: Mapped[str] = mapped_column(String(255))
-    kind: Mapped[str] = mapped_column(String(20))  # contract | policy
+    kind: Mapped[str] = mapped_column(String(20))  # contract | policy | guide | project
     path: Mapped[str] = mapped_column(Text)
+    # Solo para la documentación (kind="guide" o "project"): título, contenido Markdown y origen
+    title: Mapped[str | None] = mapped_column(String(200))
+    slug: Mapped[str | None] = mapped_column(String(120), unique=True)
+    # builtin | upload | agreement (generado del acuerdo con el cliente) | page (escrita en la app)
+    source: Mapped[str] = mapped_column(String(20), default="upload", server_default="upload")
+    content: Mapped[str | None] = mapped_column(Text)
+    content_hash: Mapped[str | None] = mapped_column(String(64))
+    # Documentación de un proyecto concreto (kind="project")
+    lead_id: Mapped[int | None] = mapped_column(ForeignKey("leads.id", ondelete="CASCADE"), index=True)
+    # Calculado en Python (no en la base de datos) para que el valor no quede caducado tras el commit
+    updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), onupdate=lambda: datetime.now(UTC)
+    )
     status: Mapped[str] = mapped_column(String(20), default="pending")  # pending | ready | failed
     error: Mapped[str | None] = mapped_column(Text)
     chunk_count: Mapped[int] = mapped_column(Integer, default=0)

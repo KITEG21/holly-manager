@@ -77,7 +77,7 @@ TEAM_USERS = [
 
 
 async def seed() -> None:
-    from app.tasks.ingest import embed_historical_task, ingest_document_task
+    from app.tasks.ingest import embed_historical_task, ingest_document_task, sync_builtin_docs_task
 
     async with task_session() as session:
         await session.execute(delete(TaskType))
@@ -118,6 +118,7 @@ async def seed() -> None:
         await session.commit()
 
         embed_historical_task.delay()
+        sync_builtin_docs_task.delay()
         for doc in new_docs:
             ingest_document_task.delay(doc.id)
     print(

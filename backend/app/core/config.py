@@ -38,6 +38,8 @@ class Settings(BaseSettings):
     token_ttl_hours: int = 12
 
     storage_dir: Path = Path("storage")
+    # Documentación incluida en el repositorio (Markdown), sincronizada con la sección Documentation
+    docs_dir: Path = Path(__file__).resolve().parents[2] / "docs"
     cors_origins: list[str] = ["http://localhost:5173", "http://localhost:5174"]
 
 

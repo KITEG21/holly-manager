@@ -95,7 +95,11 @@ class DocumentOut(BaseModel):
 
 @router.get("/documents")
 async def list_documents(session: AsyncSession = Session) -> list[DocumentOut]:
-    rows = (await session.scalars(select(Document).order_by(Document.id.desc()))).all()
+    rows = (
+        await session.scalars(
+            select(Document).where(Document.kind.in_(["contract", "policy"])).order_by(Document.id.desc())
+        )
+    ).all()
     return [DocumentOut.model_validate(r) for r in rows]
 
 

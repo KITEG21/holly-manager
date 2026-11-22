@@ -195,8 +195,12 @@ def check_response_numbers(text: str, allowed: set[Decimal]) -> list[Violation]:
 _CITATION = re.compile(r"\[C(\d+)\]")
 
 
+def cited_ids(text: str) -> set[int]:
+    return {int(x) for x in _CITATION.findall(text)}
+
+
 def check_citations(text: str, valid_ids: set[int]) -> list[Violation]:
-    cited = {int(x) for x in _CITATION.findall(text)}
+    cited = cited_ids(text)
     if cited and cited <= valid_ids:
         return []
     return [
