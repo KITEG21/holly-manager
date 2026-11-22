@@ -83,6 +83,7 @@ services:
     volumes:
       - ./frontend/src:/app/src
       - ./frontend/index.html:/app/index.html
+      - ./frontend/public:/app/public
     environment:
       VITE_API_PROXY: http://api:8000
       WATCH_POLLING: "1"

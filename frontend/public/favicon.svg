@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <style>
+    .leaf-a { stop-color: #12b28a; }
+    .leaf-b { stop-color: #0b735b; }
+    .vein { stroke: #ffffff; }
+    /* Pestañas en modo oscuro: hojas más claras para que se lean */
+    @media (prefers-color-scheme: dark) {
+      .leaf-a { stop-color: #6ee4bf; }
+      .leaf-b { stop-color: #12b28a; }
+      .vein { stroke: #0b1210; }
+    }
+  </style>
+  <defs>
+    <linearGradient id="leaf" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" class="leaf-a" />
+      <stop offset="1" class="leaf-b" />
+    </linearGradient>
+    <radialGradient id="berry" cx=".35" cy=".35" r=".8">
+      <stop offset="0" stop-color="#a5f3fc" />
+      <stop offset="1" stop-color="#06b6d4" />
+    </radialGradient>
+  </defs>
+  <path d="M15 17C9 18 4.5 14.5 3.5 8.5 9.5 7.5 14 11 15 17Z" fill="url(#leaf)" />
+  <path d="M17 17c6 1 10.5-2.5 11.5-8.5C22.5 7.5 18 11 17 17Z" fill="url(#leaf)" opacity=".7" />
+  <path class="vein" d="M15 17 7.5 10.5M17 17l7.5-6.5" stroke-width=".9" stroke-linecap="round" opacity=".45" />
+  <circle cx="16" cy="21.5" r="4.5" fill="url(#berry)" />
+</svg>
