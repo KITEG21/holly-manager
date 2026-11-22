@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 /* Dirección visual "moderno cálido + consola": jade y cian, Geist y Geist Mono, sidebar oscura con rejilla */
 @theme {

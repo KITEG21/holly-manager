@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   BarChart3,
+  BookOpen,
   CalendarClock,
   FolderKanban,
   LayoutDashboard,
@@ -116,6 +117,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     { to: "/dev/projects", label: "Projects", icon: <FolderKanban /> },
     { to: "/dev/timesheet", label: "Timesheet", icon: <CalendarClock /> },
     { to: "/dev/reports", label: "Reports", icon: <BarChart3 /> },
+    { to: "/dev/docs", label: "Documentation", icon: <BookOpen /> },
   ];
   const sales: Item[] = [
     { to: "/admin/leads", label: "Clients", icon: <Users /> },

@@ -1,17 +1,22 @@
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, ChevronLeft, Gauge, Hourglass, Layers, TrendingUp } from "lucide-react";
 import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { api } from "../../api";
 import { Badge, Card, cx, errorMessage, PageHeader, Progress, Segmented, Select, Spinner, StatCard, useToast } from "../../components/ui";
 import { TaskCard, TaskRow } from "../../components/work";
+import ProjectDocs from "./ProjectDocs";
 import { hours, STATUS_LABEL, STATUS_TONE, STATUSES, useTaskActions, type ProjectDetail, type Status, type Task } from "../../dev";
 
-type View = "board" | "sprints" | "forecast";
+type View = "board" | "sprints" | "forecast" | "docs";
+const VIEWS: View[] = ["board", "sprints", "forecast", "docs"];
 
 export default function Project() {
   const leadId = Number(useParams().leadId);
-  const [view, setView] = useState<View>("board");
+  // La vista va en la URL para que las citas del asistente puedan enlazar a un documento del proyecto
+  const [params, setParams] = useSearchParams();
+  const view: View = VIEWS.includes(params.get("view") as View) ? (params.get("view") as View) : "board";
+  const setView = (v: View) => setParams(v === "board" ? {} : { view: v });
   const [sprint, setSprint] = useState<number | "all">("all");
   const q = useQuery({ queryKey: ["dev-project", leadId], queryFn: () => api<ProjectDetail>(`/api/dev/projects/${leadId}`) });
   const p = q.data;
@@ -36,6 +41,7 @@ export default function Project() {
                   { value: "board", label: "Board" },
                   { value: "sprints", label: "Sprints" },
                   { value: "forecast", label: "Forecast" },
+                  { value: "docs", label: "Docs" },
                 ]}
               />
             }
@@ -65,6 +71,7 @@ export default function Project() {
           )}
           {view === "sprints" && <Sprints project={p} />}
           {view === "forecast" && <ForecastView project={p} />}
+          {view === "docs" && <ProjectDocs leadId={leadId} />}
         </>
       )}
     </>

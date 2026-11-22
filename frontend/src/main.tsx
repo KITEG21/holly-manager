@@ -15,6 +15,7 @@ import Leads from "./pages/Leads";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/team/Dashboard";
+import Docs from "./pages/team/Docs";
 import MyTasks from "./pages/team/MyTasks";
 import Project from "./pages/team/Project";
 import Projects from "./pages/team/Projects";
@@ -60,6 +61,8 @@ createRoot(document.getElementById("root")!).render(
               <Route path="/dev/projects/:leadId" element={team(TEAM, <Project />)} />
               <Route path="/dev/timesheet" element={team(TEAM, <Timesheet />)} />
               <Route path="/dev/reports" element={team(TEAM, <Reports />)} />
+              <Route path="/dev/docs" element={team(TEAM, <Docs />)} />
+              <Route path="/dev/docs/:docId" element={team(TEAM, <Docs />)} />
 
               <Route path="/admin/leads" element={team(ADMIN, <Leads />)} />
               <Route path="/admin/leads/:leadId" element={team(ADMIN, <LeadInternal />)} />
