@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState, type ReactNode } from "react";
-import { api, put } from "../api";
+import { api, post, put } from "../api";
 import { Badge, Button, Card, ErrorText, Input, PageHeader } from "../components/ui";
 
 interface TaskType {
@@ -80,6 +80,7 @@ export default function Admin() {
       <CommercialForm />
       <QualificationForm />
       <Documents />
+      <AIProviders />
     </div>
     </>
   );
@@ -296,6 +297,88 @@ function Documents() {
           Project history: {history.data.count} tasks with actual hours ({history.data.embedded} indexed).
         </p>
       )}
+    </Card>
+  );
+}
+
+interface Provider {
+  name: string;
+  label: string;
+  model: string;
+  configured: boolean;
+  position: number | null;
+  cooling_down_seconds: number;
+}
+
+interface PingResult {
+  ok: boolean;
+  latency_ms?: number;
+  model?: string;
+  error?: string;
+}
+
+function AIProviders() {
+  const qc = useQueryClient();
+  const providers = useQuery({ queryKey: ["llm"], queryFn: () => api<Provider[]>("/api/admin/llm"), refetchInterval: 15_000 });
+  const [results, setResults] = useState<Record<string, PingResult>>({});
+  const test = useMutation({
+    mutationFn: (name: string) => post<PingResult>(`/api/admin/llm/${name}/test`),
+    onSuccess: (r, name) => {
+      setResults((x) => ({ ...x, [name]: r }));
+      return qc.invalidateQueries({ queryKey: ["llm"] });
+    },
+    onError: (e, name) => setResults((x) => ({ ...x, [name]: { ok: false, error: e instanceof Error ? e.message : String(e) } })),
+  });
+  const ordered = [...(providers.data ?? [])].sort((a, b) => (a.position ?? 99) - (b.position ?? 99));
+
+  return (
+    <Card title="AI providers" description="Fallback chain: each call goes to the first available provider, and a provider that fails is skipped for 5 minutes.">
+      <ul className="divide-y divide-zinc-100">
+        {ordered.map((p) => {
+          const r = results[p.name];
+          return (
+            <li key={p.name} className="flex flex-wrap items-center gap-3 py-3">
+              <span className="w-5 text-center font-mono text-xs text-zinc-400">{p.position ?? "–"}</span>
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-medium text-zinc-800">{p.label}</div>
+                <div className="truncate font-mono text-xs text-zinc-500">{p.model || "no model set"}</div>
+                {r && (
+                  <div className={`mt-0.5 text-xs ${r.ok ? "text-brand-700" : "text-rose-600"}`}>
+                    {r.ok ? `Responded in ${r.latency_ms} ms (${r.model})` : r.error}
+                  </div>
+                )}
+              </div>
+              {!p.configured ? (
+                <Badge>No API key</Badge>
+              ) : p.cooling_down_seconds > 0 ? (
+                <Badge tone="amber" dot>
+                  Skipped for {Math.ceil(p.cooling_down_seconds / 60)} min
+                </Badge>
+              ) : p.position ? (
+                <Badge tone="green" dot>
+                  Active
+                </Badge>
+              ) : (
+                <Badge>Not in chain</Badge>
+              )}
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled={!p.configured}
+                loading={test.isPending && test.variables === p.name}
+                onClick={() => test.mutate(p.name)}
+              >
+                Test
+              </Button>
+            </li>
+          );
+        })}
+      </ul>
+      <p className="mt-3 text-xs text-zinc-500">
+        Keys and order live in <code className="rounded bg-zinc-100 px-1">.env</code>: <code className="rounded bg-zinc-100 px-1">GEMINI_API_KEY</code>,{" "}
+        <code className="rounded bg-zinc-100 px-1">ANTHROPIC_API_KEY</code>, <code className="rounded bg-zinc-100 px-1">OPENAI_API_KEY</code> and{" "}
+        <code className="rounded bg-zinc-100 px-1">LLM_CHAIN</code>. Restart the api and worker after changing them.
+      </p>
     </Card>
   );
 }
