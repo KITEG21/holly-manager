@@ -121,15 +121,15 @@ export function TimerWidget() {
     );
   }
   return (
-    <div className="flex items-center gap-2 rounded-full bg-brand-50 py-1 pr-1 pl-3 ring-1 ring-brand-200">
+    <div className="flex items-center gap-2 rounded-full bg-accent-50 py-1 pr-1 pl-3 ring-1 ring-accent-200">
       <span className="relative flex size-2">
-        <span className="absolute inline-flex size-full animate-ping rounded-full bg-brand-500 opacity-60" />
-        <span className="relative inline-flex size-2 rounded-full bg-brand-600" />
+        <span className="absolute inline-flex size-full animate-ping rounded-full bg-accent-500 opacity-60" />
+        <span className="relative inline-flex size-2 rounded-full bg-accent-600" />
       </span>
-      <button onClick={() => openTask(running.taskId)} className="max-w-48 truncate text-xs font-medium text-brand-700 hover:underline">
+      <button onClick={() => openTask(running.taskId)} className="max-w-48 truncate text-xs font-medium text-accent-700 hover:underline">
         {running.label}
       </button>
-      <span className="font-mono text-xs text-brand-700 tabular-nums">{elapsed}</span>
+      <span className="font-mono text-xs text-accent-700 tabular-nums">{elapsed}</span>
       <button
         onClick={async () => {
           setStopping(true);
@@ -137,7 +137,7 @@ export function TimerWidget() {
           setStopping(false);
         }}
         disabled={stopping}
-        className="grid size-7 place-items-center rounded-full bg-brand-600 text-white hover:bg-brand-700"
+        className="grid size-7 place-items-center rounded-full bg-accent-600 text-white hover:bg-accent-700"
         aria-label="Stop and log"
         title="Stop and log"
       >
@@ -365,7 +365,7 @@ export function TaskCard({ task: t, draggable = false }: { task: Task; draggable
         e.dataTransfer.effectAllowed = "move";
       }}
       onClick={() => openTask(t.id)}
-      className="group w-full rounded-xl bg-white p-3 text-left shadow-card ring-1 ring-zinc-950/5 transition hover:shadow-pop hover:ring-brand-200"
+      className="group w-full rounded-xl bg-white p-3.5 text-left shadow-card ring-1 ring-zinc-200 transition hover:-translate-y-0.5 hover:shadow-pop hover:ring-brand-300"
     >
       <div className="flex items-center justify-between gap-2">
         <span className="font-mono text-[11px] font-medium text-brand-700">{t.key}</span>

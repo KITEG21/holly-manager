@@ -63,7 +63,7 @@ export default function LeadInternal() {
                       {l.reason}
                       {l.quote && <span className="block text-xs italic text-zinc-500">“{l.quote}”</span>}
                     </span>
-                    <span className="font-mono text-emerald-700">+{l.points.toFixed(0)}</span>
+                    <span className="font-mono text-brand-700">+{l.points.toFixed(0)}</span>
                   </li>
                 ))}
               </ul>

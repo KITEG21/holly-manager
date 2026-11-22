@@ -70,9 +70,9 @@ export default function RequirementDocView({ doc }: { doc: RequirementDoc }) {
       )}
 
       {doc.summary && (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
-          <div className="mb-1 font-medium text-emerald-900">Proposed summary</div>
-          <p className="text-emerald-900">{doc.summary}</p>
+        <div className="rounded-lg border border-brand-200 bg-brand-50 p-3">
+          <div className="mb-1 font-medium text-brand-900">Proposed summary</div>
+          <p className="text-brand-900">{doc.summary}</p>
         </div>
       )}
 

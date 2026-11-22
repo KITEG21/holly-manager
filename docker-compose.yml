@@ -82,6 +82,7 @@ services:
     ports: ["${WEB_PORT:-5174}:5173"]
     volumes:
       - ./frontend/src:/app/src
+      - ./frontend/index.html:/app/index.html
     environment:
       VITE_API_PROXY: http://api:8000
       WATCH_POLLING: "1"

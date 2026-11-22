@@ -1,11 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowUp, Check, ChevronLeft, FileDown, FileText, LogOut, Sparkles } from "lucide-react";
+import { ArrowUp, Check, ChevronLeft, FileDown, FileText, LogOut } from "lucide-react";
 import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api, openProtectedFile, post, streamChat, type LeadState, type Message, type RequirementDoc, type Stage } from "../api";
 import { useAuth } from "../auth";
 import RequirementDocView from "../components/RequirementDocView";
-import { Logo } from "../components/Shell";
+import { HollyMark, Logo } from "../components/Shell";
 import { Avatar, Badge, Button, cx, ErrorText } from "../components/ui";
 
 const SHOW_DOC = new Set<Stage>(["requirements", "estimating", "commercial", "closed"]);
@@ -276,8 +276,8 @@ export default function Chat() {
 
 function AssistantAvatar() {
   return (
-    <span className="grid size-8 shrink-0 place-items-center rounded-full bg-gradient-to-br from-brand-500 to-fuchsia-500 text-white">
-      <Sparkles className="size-4" />
+    <span className="grid size-8 shrink-0 place-items-center rounded-full bg-brand-50 ring-1 ring-brand-100">
+      <HollyMark className="size-6" />
     </span>
   );
 }
@@ -300,7 +300,7 @@ function Bubble({ m, name }: { m: Message; name?: string }) {
         <div
           className={cx(
             "rounded-2xl rounded-tl-md px-4 py-3 text-sm leading-relaxed text-zinc-800 shadow-card ring-1",
-            human ? "bg-emerald-50 ring-emerald-200" : "bg-white ring-zinc-950/5",
+            human ? "bg-brand-50 ring-brand-200" : "bg-white ring-zinc-950/5",
           )}
         >
           <RichText text={m.content} />

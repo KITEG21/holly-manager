@@ -188,7 +188,7 @@ function ForecastView({ project: p }: { project: ProjectDetail }) {
           {[
             { label: "Committed", value: f.committed_hours, cls: "bg-zinc-400" },
             { label: "Logged", value: f.logged_hours, cls: "bg-brand-500" },
-            { label: "Total forecast", value: f.forecast_hours, cls: f.alert ? "bg-rose-500" : "bg-emerald-500" },
+            { label: "Total forecast", value: f.forecast_hours, cls: f.alert ? "bg-rose-500" : "bg-brand-500" },
           ].map((row) => (
             <div key={row.label} className="grid grid-cols-[120px_1fr_70px] items-center gap-3 text-sm">
               <span className="text-zinc-600">{row.label}</span>

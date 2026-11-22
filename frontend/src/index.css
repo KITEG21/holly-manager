@@ -1,35 +1,99 @@
 @import "tailwindcss";
 
+/* Dirección visual "moderno cálido + consola": jade y cian, Geist y Geist Mono, sidebar oscura con rejilla */
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
 
-  /* Acento de la marca */
-  --color-brand-50: oklch(0.97 0.02 280);
-  --color-brand-100: oklch(0.94 0.04 280);
-  --color-brand-200: oklch(0.88 0.08 280);
-  --color-brand-500: oklch(0.6 0.2 280);
-  --color-brand-600: oklch(0.53 0.22 280);
-  --color-brand-700: oklch(0.47 0.2 280);
+  /* Neutros con un matiz verde muy leve: sustituyen al gris de Tailwind en toda la app */
+  --color-zinc-50: #f6f7f5;
+  --color-zinc-100: #eef0ee;
+  --color-zinc-200: #e1e4e1;
+  --color-zinc-300: #c9cec9;
+  --color-zinc-400: #9ba39c;
+  --color-zinc-500: #727b74;
+  --color-zinc-600: #565e58;
+  --color-zinc-700: #414843;
+  --color-zinc-800: #2b312d;
+  --color-zinc-900: #1b201d;
+  --color-zinc-950: #0e1210;
+
+  /* Marca: jade */
+  --color-brand-50: #ecfdf7;
+  --color-brand-100: #d1faec;
+  --color-brand-200: #a6f2d8;
+  --color-brand-300: #6ee4bf;
+  --color-brand-400: #34cfa3;
+  --color-brand-500: #12b28a;
+  --color-brand-600: #0a9070;
+  --color-brand-700: #0b735b;
+  --color-brand-800: #0d5b49;
+  --color-brand-900: #0d4a3d;
+  --color-brand-950: #062a23;
+
+  /* Acento: cian (en curso, cronómetro, detalles activos) */
+  --color-accent-50: #ecfeff;
+  --color-accent-100: #cffafe;
+  --color-accent-200: #a5f3fc;
+  --color-accent-300: #67e8f9;
+  --color-accent-400: #22d3ee;
+  --color-accent-500: #06b6d4;
+  --color-accent-600: #0891b2;
+  --color-accent-700: #0e7490;
+
+  /* Rojo de alerta limpio, que no compite con el jade */
+  --color-rose-50: #fff1f1;
+  --color-rose-100: #ffe1e1;
+  --color-rose-200: #ffc9c9;
+  --color-rose-300: #fca5a5;
+  --color-rose-400: #f87171;
+  --color-rose-500: #e5484d;
+  --color-rose-600: #ce2c31;
+  --color-rose-700: #a51d22;
+  --color-rose-800: #7f1a1d;
+
+  /* Superficie oscura de la consola (sidebar, login) */
+  --color-ink: #0b1210;
+  --color-paper: #f5f6f4;
+  --color-surface: #ffffff;
 
   /* Series de gráficas (paleta validada: CVD y contraste sobre blanco) */
   --color-series-1: #2a78d6;
   --color-series-2: #eb6834;
   --color-series-3: #1baf7a;
 
-  --shadow-card: 0 1px 2px rgb(16 24 40 / 0.04), 0 1px 3px rgb(16 24 40 / 0.06);
-  --shadow-pop: 0 12px 32px -8px rgb(16 24 40 / 0.18), 0 4px 8px -4px rgb(16 24 40 / 0.08);
+  --shadow-card: 0 1px 2px rgb(14 18 16 / 0.04);
+  --shadow-pop: 0 16px 36px -12px rgb(14 18 16 / 0.22), 0 4px 10px -6px rgb(14 18 16 / 0.1);
 }
 
 html {
-  font-feature-settings: "cv11", "ss01";
+  font-feature-settings: "ss01", "cv11";
 }
 
 body {
-  @apply bg-zinc-50 text-zinc-900 antialiased;
+  @apply bg-paper text-zinc-900 antialiased;
+  /* Rejilla de puntos muy tenue, guiño de consola */
+  background-image: radial-gradient(rgb(14 18 16 / 0.06) 1px, transparent 1px);
+  background-size: 22px 22px;
 }
 
 ::selection {
   @apply bg-brand-100;
+}
+
+/* Rejilla para superficies oscuras (sidebar, login) */
+.console-grid {
+  background-image: radial-gradient(rgb(255 255 255 / 0.07) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+
+/* Texto con degradado jade → cian para los acentos */
+.text-gradient {
+  background: linear-gradient(90deg, var(--color-brand-400), var(--color-accent-400));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 @keyframes fade-in {

@@ -20,7 +20,15 @@ export default function Dashboard() {
 
   return (
     <>
-      <PageHeader title={`${greeting()}, ${user?.name.split(" ")[0] ?? ""}`} description="What you have on your plate and how the projects are going." />
+      <PageHeader
+        eyebrow="Your day"
+        title={
+          <>
+            {greeting()}, <span className="text-brand-600">{user?.name.split(" ")[0] ?? ""}</span>
+          </>
+        }
+        description="What you have on your plate and how the projects are going."
+      />
       {!d ? (
         <Spinner />
       ) : (

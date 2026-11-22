@@ -62,7 +62,7 @@ function SaveBar({ onSave, pending, error, saved }: { onSave: () => void; pendin
       <Button onClick={onSave} disabled={pending}>
         Save
       </Button>
-      {saved && !error && <span className="text-xs text-emerald-700">Saved</span>}
+      {saved && !error && <span className="text-xs text-brand-700">Saved</span>}
       <ErrorText error={error} />
     </div>
   );

@@ -15,18 +15,24 @@ const FEATURES = [
 export function AuthLayout({ title, subtitle, children }: { title: string; subtitle: string; children: ReactNode }) {
   return (
     <div className="grid min-h-screen lg:grid-cols-[1.05fr_1fr]">
-      <aside className="relative hidden overflow-hidden bg-zinc-950 p-12 lg:flex lg:flex-col">
-        <div className="pointer-events-none absolute -top-32 -left-32 size-[28rem] rounded-full bg-brand-600/30 blur-3xl" />
-        <div className="pointer-events-none absolute -right-24 bottom-0 size-[22rem] rounded-full bg-fuchsia-500/20 blur-3xl" />
+      <aside className="console-grid relative hidden overflow-hidden bg-ink p-12 lg:flex lg:flex-col">
+        <div className="pointer-events-none absolute -top-40 -right-24 size-[30rem] rounded-full bg-brand-500/25 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-32 -left-24 size-[24rem] rounded-full bg-accent-500/20 blur-3xl" />
+        {/* Marca de agua: la baya del logo a gran tamaño */}
+        <div className="pointer-events-none absolute top-1/2 -right-40 size-[26rem] -translate-y-1/2 rounded-full border border-white/[0.06]" />
+        <div className="pointer-events-none absolute top-1/2 -right-20 size-[18rem] -translate-y-1/2 rounded-full border border-white/[0.06]" />
         <div className="relative">
           <Logo dark />
         </div>
-        <div className="relative mt-auto max-w-md">
-          <h2 className="text-3xl font-semibold tracking-tight text-white">Software projects, from the first idea to the last hour logged.</h2>
-          <ul className="mt-10 space-y-6">
+        <div className="relative mt-auto max-w-md pt-16">
+          <p className="mb-5 inline-flex items-center gap-2 rounded-md bg-white/[0.06] px-2.5 py-1 font-mono text-[11px] tracking-[0.12em] text-brand-300 uppercase ring-1 ring-white/10"><span className="size-1.5 rounded-full bg-brand-400 shadow-[0_0_8px_#34cfa3]" /> For software studios</p>
+          <h2 className="text-[44px] leading-[1.05] font-semibold tracking-[-0.035em] text-white">
+            From the first idea to the <span className="text-gradient">last hour logged.</span>
+          </h2>
+          <ul className="mt-12 space-y-6 border-t border-white/10 pt-8">
             {FEATURES.map((f) => (
               <li key={f.title} className="flex gap-4">
-                <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-white/10 text-white ring-1 ring-white/10 [&>svg]:size-5">
+                <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-white/[0.06] text-brand-300 ring-1 ring-white/10 [&>svg]:size-[18px]">
                   {f.icon}
                 </span>
                 <div>
@@ -43,8 +49,8 @@ export function AuthLayout({ title, subtitle, children }: { title: string; subti
           <div className="mb-10 lg:hidden">
             <Logo />
           </div>
-          <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-          <p className="mt-1.5 mb-8 text-sm text-zinc-500">{subtitle}</p>
+          <h1 className="text-[30px] leading-tight font-semibold tracking-[-0.025em]">{title}</h1>
+          <p className="mt-2 mb-8 text-sm text-zinc-500">{subtitle}</p>
           {children}
         </div>
       </main>
