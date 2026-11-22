@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import AdminOnly
 from app.core.config import get_settings
 from app.core.db import get_session
+from app.core.llm import get_llm
 from app.models import Document, HistoricalTask, QualificationCriterion, TaskType
 from app.repo import get_criteria, get_rules, get_task_types, get_team, get_thresholds, put_setting
 from app.schemas.config import CommercialRules, QualificationThresholds, TaskTypeConfig, TeamConfig
@@ -155,3 +156,25 @@ async def add_historical(items: list[HistoricalTaskIn], session: AsyncSession = 
     await session.commit()
     embed_historical_task.delay()
     return await historical_stats(session)
+
+
+class LLMProviderStatus(BaseModel):
+    name: str
+    label: str
+    model: str
+    configured: bool
+    position: int | None  # posición en la cadena de respaldo; None si no participa
+    cooling_down_seconds: int
+
+
+@router.get("/llm")
+async def llm_status() -> list[LLMProviderStatus]:
+    return [LLMProviderStatus(**p) for p in get_llm().status()]
+
+
+@router.post("/llm/{name}/test")
+async def llm_test(name: str) -> dict:
+    llm = get_llm()
+    if name not in {p["name"] for p in llm.status()}:
+        raise HTTPException(404, "unknown provider")
+    return await llm.ping(name)

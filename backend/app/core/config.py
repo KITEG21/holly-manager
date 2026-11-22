@@ -14,6 +14,13 @@ class Settings(BaseSettings):
     primary_model: str = "gemini/gemini-3.8-flash"
     secondary_model: str | None = "gemini/gemini-3.1-flash-lite"
     fallback_model: str = "ollama_chat/qwen2.5:7b"
+    # Claude (Anthropic) y Codex/GPT (OpenAI): se usan si tienen clave
+    anthropic_api_key: str | None = None
+    claude_model: str = "anthropic/claude-sonnet-5-5"
+    openai_api_key: str | None = None
+    openai_model: str = "openai/gpt-5"
+    # Orden de la cadena de respaldo; se salta cualquier proveedor sin credenciales
+    llm_chain: str = "gemini,gemini_secondary,claude,openai,ollama"
     ollama_api_base: str = "http://localhost:11600"
     embedding_model: str = "ollama/nomic-embed-text"
     embedding_dim: int = 768

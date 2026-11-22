@@ -9,7 +9,8 @@ import pytest
 BASE_URL = os.environ.get("DATABASE_URL", "postgresql+asyncpg://holly:holly@localhost:5434/holly")
 TEST_URL = BASE_URL.rsplit("/", 1)[0] + "/holly_test"
 os.environ["DATABASE_URL"] = TEST_URL
-os.environ.pop("OTEL_EXPORTER_OTLP_ENDPOINT", None)
+# Vacío (no ausente): si no, se leería del .env y los tests enviarían trazas a Jaeger
+os.environ["OTEL_EXPORTER_OTLP_ENDPOINT"] = ""
 
 from pydantic import BaseModel  # noqa: E402
 from sqlalchemy import text  # noqa: E402

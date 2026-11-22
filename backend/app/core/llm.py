@@ -1,9 +1,14 @@
-"""Capa LLM sobre LiteLLM: Gemini como principal y un modelo local en Ollama como respaldo.
+"""Capa LLM sobre LiteLLM con una cadena de respaldo configurable (LLM_CHAIN): Gemini, Claude (Anthropic),
+Codex/GPT (OpenAI) y un modelo local en Ollama. Se saltan los proveedores sin credenciales y, durante un rato,
+los que acaban de fallar.
 
 Los agentes dependen del protocolo `LLMClient`, no de LiteLLM, para poder testearlos con un LLM falso.
 """
 
+import asyncio
 import json
+import time
+from dataclasses import dataclass
 from functools import lru_cache
 from typing import Any, Literal, Protocol, TypeVar
 
@@ -48,6 +53,59 @@ def with_prefix(model: str, texts: list[str], purpose: EmbedPurpose) -> list[str
     return [prefixes[purpose] + t for t in texts] if prefixes else texts
 
 
+REMOTE_TIMEOUT = 30  # segundos por llamada a un proveedor remoto antes de pasar al siguiente
+COOLDOWN_SECONDS = 300
+PING_TIMEOUT = 60  # segundos máximos de la prueba de un proveedor desde Settings  # tiempo que se salta un modelo que acaba de fallar
+
+
+@dataclass(frozen=True)
+class Provider:
+    """Un proveedor de la cadena: nombre usado en LLM_CHAIN, modelo de LiteLLM y sus credenciales."""
+
+    name: str
+    label: str
+    model: str
+    api_key: str | None = None
+    api_base: str | None = None
+    remote: bool = True
+
+    @property
+    def configured(self) -> bool:
+        return bool(self.model) and (not self.remote or bool(self.api_key))
+
+    def params(self) -> dict[str, Any]:
+        params: dict[str, Any] = {"model": self.model}
+        if self.api_key:
+            params["api_key"] = self.api_key
+        if self.api_base:
+            params["api_base"] = self.api_base
+        if self.remote:
+            # Un proveedor saturado puede tardar más de un minuto en fallar: mejor pasar al siguiente
+            params["timeout"] = REMOTE_TIMEOUT
+        return params
+
+
+def providers(s) -> list[Provider]:
+    return [
+        Provider("gemini", "Gemini", s.primary_model, api_key=s.gemini_api_key),
+        Provider("gemini_secondary", "Gemini (secondary)", s.secondary_model or "", api_key=s.gemini_api_key),
+        Provider("claude", "Claude (Anthropic)", s.claude_model, api_key=s.anthropic_api_key),
+        Provider("openai", "Codex / GPT (OpenAI)", s.openai_model, api_key=s.openai_api_key),
+        Provider("ollama", "Local (Ollama)", s.fallback_model, api_base=s.ollama_api_base, remote=False),
+    ]
+
+
+def chain_order(s) -> list[str]:
+    known = {p.name for p in providers(s)}
+    order = [n.strip().lower() for n in s.llm_chain.split(",") if n.strip()]
+    unknown = [n for n in order if n not in known]
+    if unknown:
+        raise ValueError(
+            f"unknown LLM_CHAIN providers: {', '.join(unknown)} (valid: {', '.join(sorted(known))})"
+        )
+    return list(dict.fromkeys(order))  # sin duplicados, conservando el orden
+
+
 class StructuredOutputError(RuntimeError):
     pass
 
@@ -82,31 +140,89 @@ class LiteLLMClient:
 
         s = get_settings()
         self._settings = s
-        model_list = [
+        self._providers = {p.name: p for p in providers(s)}
+        # Cadena en el orden de LLM_CHAIN, solo con los proveedores que tienen credenciales
+        usable = [self._providers[n] for n in chain_order(s) if self._providers[n].configured]
+        if not usable:
+            usable = [self._providers["ollama"]]
+        self._chain: list[tuple[str, str]] = [(p.name, p.model) for p in usable]
+        model_list = [{"model_name": p.name, "litellm_params": p.params()} for p in usable]
+        names = [n for n, _ in self._chain]
+        fallbacks = [{n: names[i + 1 :]} for i, n in enumerate(names[:-1])]
+        # Sin reintentos sobre el mismo modelo: la resiliencia la da la cadena de respaldo
+        self._router = Router(model_list=model_list, fallbacks=fallbacks, num_retries=0, timeout=120)
+        self._down_until: dict[str, float] = {}
+
+    def status(self) -> list[dict[str, Any]]:
+        """Estado de cada proveedor para la pantalla de Settings."""
+        now = time.monotonic()
+        names = [n for n, _ in self._chain]
+        return [
             {
-                "model_name": "fallback",
-                "litellm_params": {"model": s.fallback_model, "api_base": s.ollama_api_base},
+                "name": p.name,
+                "label": p.label,
+                "model": p.model,
+                "configured": p.configured,
+                "position": names.index(p.name) + 1 if p.name in names else None,
+                "cooling_down_seconds": max(0, round(self._down_until.get(p.name, 0) - now)),
             }
+            for p in self._providers.values()
         ]
-        fallbacks = []
-        self._entry = "fallback"
-        if s.gemini_api_key:
-            # Cadena: modelo principal → segundo modelo de Gemini (picos de demanda) → modelo local
-            chain = []
-            for name, model in [("primary", s.primary_model), ("secondary", s.secondary_model)]:
-                if model:
-                    model_list.append(
-                        {"model_name": name, "litellm_params": {"model": model, "api_key": s.gemini_api_key}}
-                    )
-                    chain.append(name)
-            fallbacks = [{chain[0]: [*chain[1:], "fallback"]}]
-            self._entry = chain[0]
-        self._router = Router(model_list=model_list, fallbacks=fallbacks, num_retries=1, timeout=90)
+
+    async def ping(self, name: str) -> dict[str, Any]:
+        """Prueba un proveedor concreto, sin la cadena de respaldo."""
+        from litellm import acompletion
+
+        provider = self._providers[name]
+        if not provider.configured:
+            return {"ok": False, "error": "not configured (missing API key or model)"}
+        started = time.monotonic()
+        try:
+            # Un modelo local frío puede tardar minutos en cargar: la prueba no debe colgar la pantalla
+            resp = await asyncio.wait_for(
+                acompletion(
+                    **provider.params(),
+                    messages=[{"role": "user", "content": "Reply with the word OK."}],
+                    max_tokens=20,
+                ),
+                timeout=PING_TIMEOUT,
+            )
+        except TimeoutError:
+            return {
+                "ok": False,
+                "latency_ms": round((time.monotonic() - started) * 1000),
+                "error": f"no response after {PING_TIMEOUT} s",
+            }
+        except Exception as e:  # noqa: BLE001  el error se muestra tal cual en Settings
+            return {
+                "ok": False,
+                "latency_ms": round((time.monotonic() - started) * 1000),
+                "error": str(e)[:300],
+            }
+        if name in self._down_until:
+            self._down_until.pop(name)  # vuelve a estar disponible
+        return {"ok": True, "latency_ms": round((time.monotonic() - started) * 1000), "model": resp.model}
+
+    def _entry(self) -> str:
+        """Primer modelo de la cadena que no está en enfriamiento."""
+        now = time.monotonic()
+        return next((n for n, _ in self._chain if self._down_until.get(n, 0) <= now), self._chain[-1][0])
+
+    def _record(self, entry: str, served_model: str | None) -> None:
+        """Circuit breaker: si respondió un modelo posterior al de entrada, el de entrada falló; se salta un rato."""
+        names = [n for n, _ in self._chain]
+        # Coincidencia más larga: "gemini-x-flash-lite" no debe confundirse con "gemini-x-flash"
+        matches = [(len(m), n) for n, m in self._chain if served_model and m.split("/")[-1] in served_model]
+        served = max(matches)[1] if matches else entry
+        if names.index(served) > names.index(entry):
+            for n in names[names.index(entry) : names.index(served)]:
+                self._down_until[n] = time.monotonic() + COOLDOWN_SECONDS
 
     async def chat(self, messages: list[dict[str, Any]], tools: list[dict] | None = None) -> LLMResponse:
         with tracer.start_as_current_span("llm.chat") as span:
             set_json_attr(span, "llm.prompt", messages[-6:])
-            kwargs: dict[str, Any] = {"model": self._entry, "messages": messages, "temperature": 0.2}
+            entry = self._entry()
+            kwargs: dict[str, Any] = {"model": entry, "messages": messages, "temperature": 0.2}
             if tools:
                 kwargs["tools"] = tools
             resp = await self._router.acompletion(**kwargs)
@@ -119,6 +235,7 @@ class LiteLLMClient:
                 )
                 for i, tc in enumerate(msg.tool_calls or [])
             ]
+            self._record(entry, resp.model)
             span.set_attribute("llm.model", resp.model or "")
             set_json_attr(span, "llm.completion", msg.content or "")
             set_json_attr(span, "llm.tool_calls", [c.model_dump() for c in calls])
@@ -132,11 +249,12 @@ class LiteLLMClient:
             last_error = ""
             for attempt in range(2):
                 resp = await self._router.acompletion(
-                    model=self._entry,
+                    model=(entry := self._entry()),
                     messages=convo,
                     temperature=0,
                     response_format={"type": "json_object"},
                 )
+                self._record(entry, resp.model)
                 raw = resp.choices[0].message.content or ""
                 try:
                     result = schema.model_validate_json(_strip_fences(raw))
